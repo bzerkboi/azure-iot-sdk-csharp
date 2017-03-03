@@ -73,14 +73,28 @@ namespace Microsoft.Azure.Devices.E2ETests
         [TestCategory("Method-E2E")]
         public async Task Method_DeviceReceivesMethodAndResponse_Mqtt()
         {
-            await sendMethodAndRespond(Client.TransportType.Mqtt);
+            await sendMethodAndRespond(Client.TransportType.Mqtt_Tcp_Only);
         }
 
         [TestMethod]
         [TestCategory("Method-E2E")]
-        public async Task Method_DeviceReceivesMethodAndResponse_Mqtt_With_Obseleted_SetMethodHandler()
+        public async Task Method_DeviceReceivesMethodAndResponse_MqttWs()
         {
-            await sendMethodAndRespond_With_Obseleted_SetMethodHandler(Client.TransportType.Mqtt);
+            await sendMethodAndRespond(Client.TransportType.Mqtt_WebSocket_Only);
+        }
+
+        [TestMethod]
+        [TestCategory("Method-E2E")]
+        public async Task Method_DeviceReceivesMethodAndResponseWithObseletedSetMethodHandler_Mqtt()
+        {
+            await sendMethodAndRespondWithObseletedSetMethodHandler(Client.TransportType.Mqtt_Tcp_Only);
+        }
+
+        [TestMethod]
+        [TestCategory("Method-E2E")]
+        public async Task Method_DeviceReceivesMethodAndResponseWithObseletedSetMethodHandler_MqttWs()
+        {
+            await sendMethodAndRespondWithObseletedSetMethodHandler(Client.TransportType.Mqtt_WebSocket_Only);
         }
 
 #if WIP_C2D_METHODS_AMQP
@@ -100,7 +114,6 @@ namespace Microsoft.Azure.Devices.E2ETests
 
             var assertResult = new TaskCompletionSource<Tuple<bool, bool>>();
             var deviceClient = DeviceClient.CreateFromConnectionString(deviceConnectionString, transport);
-            await deviceClient.OpenAsync();
             await deviceClient.SetMethodHandlerAsync(methodName,
                 (request, context) =>
                 {
@@ -123,7 +136,7 @@ namespace Microsoft.Azure.Devices.E2ETests
             await deviceClient.CloseAsync();
         }
 
-        async Task sendMethodAndRespond_With_Obseleted_SetMethodHandler(Client.TransportType transport)
+        async Task sendMethodAndRespondWithObseletedSetMethodHandler(Client.TransportType transport)
         {
             string deviceResponseJson = "{\"name\":\"e2e_test\"}";
             string serviceRequestJson = "{\"a\":123}";
@@ -131,8 +144,7 @@ namespace Microsoft.Azure.Devices.E2ETests
 
             var assertResult = new TaskCompletionSource<Tuple<bool, bool>>();
             var deviceClient = DeviceClient.CreateFromConnectionString(deviceConnectionString, transport);
-            await deviceClient.OpenAsync();
-            deviceClient.SetMethodHandler(methodName,
+            deviceClient?.SetMethodHandler(methodName,
                 (request, context) =>
                 {
                     assertResult.SetResult(new Tuple<bool, bool>(request.Name.Equals(methodName), request.DataAsJson.Equals(serviceRequestJson)));
